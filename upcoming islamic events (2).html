@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Islamic Events Countdown</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-700 min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md w-full border-4 border-blue-400">
+    <h1 class="text-4xl font-extrabold text-gray-800 mb-4 tracking-tight">
+      Islamic Events Countdown
+    </h1>
+
+    <div class="mb-6">
+      <label for="eventSelect" class="block text-gray-700 text-sm font-bold mb-2">Select Event:</label>
+      <div class="relative inline-block w-full">
+        <select id="eventSelect" class="block appearance-none w-full bg-gray-100 border border-gray-300 text-gray-700 py-3 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500 shadow-sm">
+          <option value="">-- Select an Event --</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+          <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-lg text-gray-600 mb-6" id="selectedEventDisplay">Please select an event</p>
+
+    <div class="mb-8">
+      <p class="text-2xl font-bold text-blue-600" id="eventDateTime"></p>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div class="bg-blue-100 p-4 rounded-lg shadow-md">
+        <div class="text-3xl font-bold text-blue-800" id="days">--</div>
+        <div class="text-sm text-blue-600">Days</div>
+      </div>
+      <div class="bg-blue-100 p-4 rounded-lg shadow-md">
+        <div class="text-3xl font-bold text-blue-800" id="hours">--</div>
+        <div class="text-sm text-blue-600">Hours</div>
+      </div>
+      <div class="bg-blue-100 p-4 rounded-lg shadow-md">
+        <div class="text-3xl font-bold text-blue-800" id="minutes">--</div>
+        <div class="text-sm text-blue-600">Minutes</div>
+      </div>
+      <div class="bg-blue-100 p-4 rounded-lg shadow-md">
+        <div class="text-3xl font-bold text-blue-800" id="seconds">--</div>
+        <div class="text-sm text-blue-600">Seconds</div>
+      </div>
+    </div>
+
+    <p class="text-sm text-gray-500" id="countdownMessage"></p>
+  </div>
+
+  <script>
+    const islamicEvents = [
+      { id: "ramadan_2025", name: "Ramadan 1446 AH (2025)", date: new Date('2025-03-01T00:00:00Z'), description: "The holy month of fasting." },
+      { id: "eid_al_fitr_2025", name: "Eid al-Fitr 1446 AH (2025)", date: new Date('2025-03-31T00:00:00Z'), description: "Festival of Breaking the Fast." },
+      { id: "eid_al_adha_2025", name: "Eid al-Adha 1446 AH (2025)", date: new Date('2025-06-07T00:00:00Z'), description: "Festival of Sacrifice." },
+      { id: "ramadan_2026", name: "Ramadan 1447 AH (2026)", date: new Date('2026-02-18T00:00:00Z'), description: "The holy month of fasting." },
+      { id: "eid_al_fitr_2026", name: "Eid al-Fitr 1447 AH (2026)", date: new Date('2026-03-19T00:00:00Z'), description: "Festival of Breaking the Fast." },
+      { id: "eid_al_adha_2026", name: "Eid al-Adha 1447 AH (2026)", date: new Date('2026-05-28T00:00:00Z'), description: "Festival of Sacrifice." },
+      { id: "ramadan_2027", name: "Ramadan 1448 AH (2027)", date: new Date('2027-02-07T00:00:00Z'), description: "The holy month of fasting." },
+      { id: "eid_al_fitr_2027", name: "Eid al-Fitr 1448 AH (2027)", date: new Date('2027-03-09T00:00:00Z'), description: "Festival of Breaking the Fast." },
+      { id: "eid_al_adha_2027", name: "Eid al-Adha 1448 AH (2027)", date: new Date('2027-05-17T00:00:00Z'), description: "Festival of Sacrifice." }
+    ];
+
+    const eventSelectElement = document.getElementById('eventSelect');
+    const selectedEventDisplayElement = document.getElementById('selectedEventDisplay');
+    const eventDateTimeElement = document.getElementById('eventDateTime');
+    const daysElement = document.getElementById('days');
+    const hoursElement = document.getElementById('hours');
+    const minutesElement = document.getElementById('minutes');
+    const secondsElement = document.getElementById('seconds');
+    const countdownMessageElement = document.getElementById('countdownMessage');
+
+    let countdownInterval;
+
+    function populateEventSelect() {
+      const now = new Date();
+      const upcomingEvents = islamicEvents.filter(event => event.date > now);
+      upcomingEvents.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.id;
+        option.textContent = event.name;
+        eventSelectElement.appendChild(option);
+      });
+    }
+
+    function formatTime(unit) {
+      return unit < 10 ? '0' + unit : unit;
+    }
+
+    function updateCountdown(event) {
+      clearInterval(countdownInterval);
+
+      selectedEventDisplayElement.textContent = event.name;
+      eventDateTimeElement.textContent = `Expected: ${event.date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })} (Subject to Moon Sighting)`;
+
+      function tick() {
+        const now = new Date().getTime();
+        const distance = event.date.getTime() - now;
+
+        if (distance < 0) {
+          clearInterval(countdownInterval);
+          daysElement.textContent = '00';
+          hoursElement.textContent = '00';
+          minutesElement.textContent = '00';
+          secondsElement.textContent = '00';
+          countdownMessageElement.textContent = `${event.name} has arrived!`;
+          return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        daysElement.textContent = formatTime(days);
+        hoursElement.textContent = formatTime(hours);
+        minutesElement.textContent = formatTime(minutes);
+        secondsElement.textContent = formatTime(seconds);
+
+        countdownMessageElement.textContent = `Time until ${event.name}: ${event.description}`;
+      }
+
+      tick();
+      countdownInterval = setInterval(tick, 1000);
+    }
+
+    eventSelectElement.addEventListener('change', () => {
+      const selectedEventId = eventSelectElement.value;
+      const selectedEvent = islamicEvents.find(e => e.id === selectedEventId);
+
+      if (selectedEvent) {
+        updateCountdown(selectedEvent);
+      } else {
+        clearInterval(countdownInterval);
+        selectedEventDisplayElement.textContent = 'Please select an event';
+        eventDateTimeElement.textContent = '';
+        daysElement.textContent = '--';
+        hoursElement.textContent = '--';
+        minutesElement.textContent = '--';
+        secondsElement.textContent = '--';
+        countdownMessageElement.textContent = '';
+      }
+    });
+
+    populateEventSelect();
+  </script>
+</body>
+</html>
